@@ -128,21 +128,21 @@ def save_val(G, D, val_path, val_dataloader, device):
         image = image.to(device)
         condition = condition.to(device)
         with torch.no_grad():
-            fake = G(torch.unsqueeze(condition, 0))
+            fake = G(condition)
 
         img_cpu = image.detach().cpu()
         condition_cpu = condition.detach().cpu()
-        fake_cpu = fake.detach().cpu().squeeze()
-        if condition_cpu.shape[0] == 1:
-            condition_cpu = condition_cpu.repeat(3, 1, 1)
+        fake_cpu = fake.detach().cpu()
+        if condition_cpu.shape[1] == 1:
+            condition_cpu = condition_cpu.repeat(1, 3, 1, 1)
 
-        if img_cpu.shape[0] == 1:
-            img_cpu = img_cpu.repeat(3, 1, 1)
+        if img_cpu.shape[1] == 1:
+            img_cpu = img_cpu.repeat(1, 3, 1, 1)
 
-        if fake_cpu.shape[0] == 1:
-            fake_cpu = fake_cpu.repeat(3, 1, 1)
+        if fake_cpu.shape[1] == 1:
+            fake_cpu = fake_cpu.repeat(1, 3, 1, 1)
 
-        combined = torch.cat([img_cpu, condition_cpu, fake_cpu], dim=2)
+        combined = torch.cat([img_cpu, condition_cpu, fake_cpu], dim=3)
         vutils.save_image(combined, os.path.join(save_dir, f"{i}.png"), normalize=True)
     G.train()
     D.train()
@@ -200,12 +200,12 @@ if __name__ == "__main__":
     os.makedirs(checkpoint_path, exist_ok=True)
     os.makedirs(result_path, exist_ok=True)
     os.makedirs(val_path, exist_ok=True)
-    val_path = os.path.join(val_path + f"{len(os.listdir(val_path))}")
+    val_path = os.path.join(val_path, f"{len(os.listdir(val_path))}")
     os.makedirs(val_path, exist_ok=True)
 
     G.train()
     D.train()
-    step = 0
+    step = 1
     test_images = []
     test_contours = []
     for i in range(50):

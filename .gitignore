@@ -210,3 +210,6 @@ __marimo__/
 checkpoints
 dataset
 results
+val
+val/*
+val/**
