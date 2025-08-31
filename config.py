@@ -8,7 +8,7 @@ NUM_CONTOUR_CHANNELS = 1
 
 IMAGE_DIM = 256
 
-LAMBDA_L1 = 2 #100 u rad
+LAMBDA_L1 = 100  # 2 u run 4  #1 u run 3  #100 u run 1 i run 2
 LAMBDA_ADVERSARIAL = 1
 
 NUM_EPOCHES = 500
