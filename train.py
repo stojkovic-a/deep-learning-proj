@@ -115,11 +115,27 @@ def save_results(G, D, result_path, test_images, test_contours, device):
     D.train()
 
 
-def save_val(G, D, val_path, val_dataloader, device):
+def save_val(
+    G,
+    D,
+    val_path,
+    val_dataloader,
+    device,
+    val_losses,
+    rec_crit,
+    adv_crit,
+    lambda_rec,
+    lambda_adv,
+):
     G.eval()
     D.eval()
+    mean_gen_adv_loss = 0
+    mean_gen_rec_loss = 0
+    mean_disc_loss = 0
     num_dirs = len(os.listdir(val_path))
     save_dir = os.path.join(val_path, f"{num_dirs}")
+    num_images = len(val_dataloader)
+
     os.makedirs(save_dir, exist_ok=True)
     for m in G.modules():
         if isinstance(m, torch.nn.Dropout):
@@ -129,23 +145,58 @@ def save_val(G, D, val_path, val_dataloader, device):
         condition = condition.to(device)
         with torch.no_grad():
             fake = G(condition)
+            _, adv_loss, rec_loss = get_gen_loss(
+                G, D, image, condition, rec_crit, adv_crit, lambda_rec, lambda_adv
+            )
+            disc_fake = D(fake, condition)
+            disc_fake_loss = adv_crit(disc_fake, torch.zeros_like(disc_fake))
+            disc_real = D(image, condition)
+            disc_real_loss = adv_crit(disc_real, torch.ones_like(disc_real))
+            disc_loss = 0.5 * (disc_fake_loss + disc_real_loss)
+            mean_gen_adv_loss += adv_loss / num_images
+            mean_gen_rec_loss += rec_loss / num_images
+            mean_disc_loss += disc_loss / num_images
+            img_cpu = image.detach().cpu()
+            condition_cpu = condition.detach().cpu()
+            fake_cpu = fake.detach().cpu()
+            if condition_cpu.shape[1] == 1:
+                condition_cpu = condition_cpu.repeat(1, 3, 1, 1)
 
-        img_cpu = image.detach().cpu()
-        condition_cpu = condition.detach().cpu()
-        fake_cpu = fake.detach().cpu()
-        if condition_cpu.shape[1] == 1:
-            condition_cpu = condition_cpu.repeat(1, 3, 1, 1)
+            if img_cpu.shape[1] == 1:
+                img_cpu = img_cpu.repeat(1, 3, 1, 1)
 
-        if img_cpu.shape[1] == 1:
-            img_cpu = img_cpu.repeat(1, 3, 1, 1)
+            if fake_cpu.shape[1] == 1:
+                fake_cpu = fake_cpu.repeat(1, 3, 1, 1)
 
-        if fake_cpu.shape[1] == 1:
-            fake_cpu = fake_cpu.repeat(1, 3, 1, 1)
-
-        combined = torch.cat([img_cpu, condition_cpu, fake_cpu], dim=3)
-        vutils.save_image(combined, os.path.join(save_dir, f"{i}.png"), normalize=True)
+            combined = torch.cat([img_cpu, condition_cpu, fake_cpu], dim=3)
+            vutils.save_image(
+                combined, os.path.join(save_dir, f"{i}.png"), normalize=True
+            )
+    val_losses.append((mean_gen_adv_loss, mean_gen_rec_loss, mean_disc_loss))
+    plt.figure(figsize=(8, 6))
+    plt.plot(
+        [x[0] for x in val_losses],
+        label="Generator Adversarial Loss",
+        color="red",
+    )
+    plt.plot(
+        [x[1] for x in val_losses],
+        label="Generator Reconstruction Loss",
+        color="blue",
+    )
+    plt.plot([x[2] for x in val_losses], label="Discriminator Loss", color="green")
+    plt.xlabel("Save number")
+    plt.ylabel("Losses")
+    plt.title("Training Loss Curves")
+    plt.legend()
+    plt.grid(True)
+    os.makedirs(val_path, exist_ok=True)
+    save_path = os.path.join(val_path, "loss_val.png")
+    plt.savefig(save_path)
+    plt.close()
     G.train()
     D.train()
+    return val_losses
 
 
 if __name__ == "__main__":
@@ -218,6 +269,7 @@ if __name__ == "__main__":
     graph_gen_adv_losses = []
     graph_gen_rec_losses = []
     graph_disc_losses = []
+    val_losses = []
     for epoch in range(num_epoches):
         for condition, image in tqdm(dataloader):
             condition = condition.to(device)
@@ -266,7 +318,18 @@ if __name__ == "__main__":
             if step % updates_per_checkpoint == 0:
                 save_checkpoint(checkpoint_path, G, D, g_optim, d_optim)
             if step % updates_per_val == 0:
-                save_val(G, D, val_path, val_dataloader, device)
+                val_losses = save_val(
+                    G,
+                    D,
+                    val_path,
+                    val_dataloader,
+                    device,
+                    val_losses,
+                    reconstruction_criterion,
+                    adversarial_criterion,
+                    lambda_rec,
+                    lambda_adv,
+                )
                 graph_gen_adv_losses.append(mean_gen_adv_loss)
                 graph_gen_rec_losses.append(mean_gen_rec_loss)
                 graph_disc_losses.append(mean_disc_loss)
