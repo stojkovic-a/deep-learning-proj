@@ -155,7 +155,7 @@ def save_val(
             disc_loss = 0.5 * (disc_fake_loss + disc_real_loss)
             mean_gen_adv_loss += adv_loss / num_images
             mean_gen_rec_loss += rec_loss / num_images
-            mean_disc_loss += disc_loss / num_images
+            mean_disc_loss += disc_loss.item() / num_images
             img_cpu = image.detach().cpu()
             condition_cpu = condition.detach().cpu()
             fake_cpu = fake.detach().cpu()
