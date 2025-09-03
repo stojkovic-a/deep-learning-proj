@@ -213,8 +213,13 @@ if __name__ == "__main__":
     )
     G.to(device)
     D.to(device)
+    # ds = ImageContourDataset(
+    #     conf.PHOTOS_PATH, conf.CONTOURS_PATH, get_train_transforms(conf.IMAGE_DIM)
+    # )
     ds = ImageContourDataset(
-        conf.PHOTOS_PATH, conf.CONTOURS_PATH, get_train_transforms(conf.IMAGE_DIM)
+        conf.PHOTOS_PATH_TRANSFER,
+        conf.CONTOURS_PATH_TRANSFER,
+        get_train_transforms(conf.IMAGE_DIM),
     )
     batch_size = conf.BATCH_SIZE
     dataloader = DataLoader(ds, batch_size=batch_size, shuffle=True)
@@ -317,48 +322,48 @@ if __name__ == "__main__":
                 save_results(G, D, result_path, test_images, test_contours, device)
             if step % updates_per_checkpoint == 0:
                 save_checkpoint(checkpoint_path, G, D, g_optim, d_optim)
-            if step % updates_per_val == 0:
-                val_losses = save_val(
-                    G,
-                    D,
-                    val_path,
-                    val_dataloader,
-                    device,
-                    val_losses,
-                    reconstruction_criterion,
-                    adversarial_criterion,
-                    lambda_rec,
-                    lambda_adv,
-                )
-                graph_gen_adv_losses.append(mean_gen_adv_loss)
-                graph_gen_rec_losses.append(mean_gen_rec_loss)
-                graph_disc_losses.append(mean_disc_loss)
+            # if step % updates_per_val == 0:
+            #     val_losses = save_val(
+            #         G,
+            #         D,
+            #         val_path,
+            #         val_dataloader,
+            #         device,
+            #         val_losses,
+            #         reconstruction_criterion,
+            #         adversarial_criterion,
+            #         lambda_rec,
+            #         lambda_adv,
+            #     )
+            #     graph_gen_adv_losses.append(mean_gen_adv_loss)
+            #     graph_gen_rec_losses.append(mean_gen_rec_loss)
+            #     graph_disc_losses.append(mean_disc_loss)
 
-                plt.figure(figsize=(8, 6))
-                plt.plot(
-                    graph_gen_adv_losses,
-                    label="Generator Adversarial Loss",
-                    color="red",
-                )
-                plt.plot(
-                    graph_gen_rec_losses,
-                    label="Generator Reconstruction Loss",
-                    color="blue",
-                )
-                plt.plot(graph_disc_losses, label="Discriminator Loss", color="green")
-                plt.xlabel("Save number")
-                plt.ylabel("Losses")
-                plt.title("Training Loss Curves")
-                plt.legend()
-                plt.grid(True)
-                os.makedirs(val_path, exist_ok=True)
-                save_path = os.path.join(val_path, "loss.png")
-                plt.savefig(save_path)
-                plt.close()
+            #     plt.figure(figsize=(8, 6))
+            #     plt.plot(
+            #         graph_gen_adv_losses,
+            #         label="Generator Adversarial Loss",
+            #         color="red",
+            #     )
+            #     plt.plot(
+            #         graph_gen_rec_losses,
+            #         label="Generator Reconstruction Loss",
+            #         color="blue",
+            #     )
+            #     plt.plot(graph_disc_losses, label="Discriminator Loss", color="green")
+            #     plt.xlabel("Save number")
+            #     plt.ylabel("Losses")
+            #     plt.title("Training Loss Curves")
+            #     plt.legend()
+            #     plt.grid(True)
+            #     os.makedirs(val_path, exist_ok=True)
+            #     save_path = os.path.join(val_path, "loss.png")
+            #     plt.savefig(save_path)
+            #     plt.close()
 
-                mean_gen_adv_loss = 0
-                mean_gen_rec_loss = 0
-                mean_disc_loss = 0
+            #     mean_gen_adv_loss = 0
+            #     mean_gen_rec_loss = 0
+            #     mean_disc_loss = 0
 
             if step == max(
                 [updates_per_checkpoint, updates_per_result, updates_per_val]
