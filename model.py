@@ -164,7 +164,7 @@ class UNetGenerator(nn.Module):
 
 class PatchDiscriminator(nn.Module):
     """70x70 Patch discriminator:
-    Decoder:  C512-C512-C512-C512-C256-C128-C64-C3 (
+    Disriminator: C4-C64-C128-C256-C512-C1  (
     Conv: 4x4
     Stride: 2
     No Batch Norm on first layer
