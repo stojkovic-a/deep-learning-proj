@@ -8,7 +8,13 @@ import torchvision.utils as vutils
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from model import PatchDiscriminator, UNetGenerator, init_weights_normal
+from model import (
+    PatchDiscriminator,
+    UNetGenerator,
+    init_weights_normal,
+    UNetGeneratorCustom,
+    PatchDiscriminatorCustom,
+)
 from dataset import ImageContourDataset
 import config as conf
 
@@ -26,6 +32,28 @@ def build_pix2pix(
         start_filters=start_filters_gen,
     )
     D = PatchDiscriminator(
+        real_channels=image_channels,
+        condition_channels=condition_channels,
+        start_filters=start_filters_disc,
+    )
+    G.apply(init_weights_normal)
+    D.apply(init_weights_normal)
+    return G, D
+
+
+def build_pix2pix_custom(
+    image_channels: int = 3,
+    condition_channels: int = 1,
+    out_channels: int = 3,
+    start_filters_gen: int = 64,
+    start_filters_disc: int = 64,
+):
+    G = UNetGeneratorCustom(
+        in_channels=condition_channels,
+        out_channels=out_channels,
+        start_filters=start_filters_gen,
+    )
+    D = PatchDiscriminatorCustom(
         real_channels=image_channels,
         condition_channels=condition_channels,
         start_filters=start_filters_disc,
@@ -206,7 +234,12 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
-    G, D = build_pix2pix(
+    # G, D = build_pix2pix(
+    #     image_channels=conf.NUM_IMAGE_CHANNELS,
+    #     condition_channels=conf.NUM_CONTOUR_CHANNELS,
+    #     out_channels=conf.NUM_IMAGE_CHANNELS,
+    # )
+    G, D = build_pix2pix_custom(
         image_channels=conf.NUM_IMAGE_CHANNELS,
         condition_channels=conf.NUM_CONTOUR_CHANNELS,
         out_channels=conf.NUM_IMAGE_CHANNELS,
