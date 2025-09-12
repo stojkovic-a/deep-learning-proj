@@ -124,9 +124,9 @@ if __name__ == "__main__":
     # pad_resize(
     #     "./dataset/transfer learning/archive/sketches", conf.CONTOURS_PATH_TRANSFER, 256
     # )
-    # get_contours(conf.PHOTOS_PATH_TEST, conf.CONTOURS_PATH_TEST)
+    get_contours(conf.PHOTOS_PATH_TEST, conf.CONTOURS_PATH_TEST)
     # resize("./dataset/test/images","./dataset/test/images",256)
-    canny_edges(
-        "./dataset/test/images/4.jpeg", "./dataset/test/contours_inverted/4.png"
-    )
-    invert("./dataset/test/contours_inverted", conf.CONTOURS_PATH_TEST)
+    # canny_edges(
+    #     "./dataset/test/images/4.jpeg", "./dataset/test/contours_inverted/4.png"
+    # )
+    # invert("./dataset/test/contours_inverted", conf.CONTOURS_PATH_TEST)
